@@ -1,7 +1,7 @@
 provider "aws" {
      region = "us-east-2"
-     access_key = "AKIA3ACNW5PKN4WNUYMU"
-     secret_key = "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"
+     access_key = "AKIA3ACNW5PKJQ3SQ66B"
+     secret_key = "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"
 }
 # create vpc 
 resource "aws_vpc" "prod-vpc" {
@@ -110,7 +110,7 @@ resource "aws_instance" "web_server_insatnce" {
     availability_zone = "us-east-2a"
     key_name = "terra-key"
 tags = {
-     Name= "myvm"
+     Name= "dev_vm"
 }  
     network_interface {
         device_index = 0 
