@@ -109,7 +109,9 @@ resource "aws_instance" "web_server_insatnce" {
     instance_type = "t2.micro"
     availability_zone = "us-east-2a"
     key_name = "terra-key"
-  
+tags = {
+     Name= "myvm"
+}  
     network_interface {
         device_index = 0 
         network_interface_id = aws_network_interface.test.id 
@@ -124,4 +126,3 @@ resource "aws_instance" "web_server_insatnce" {
                 sudo apt install net-tools
                 EOF
 }
-
