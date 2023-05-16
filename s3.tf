@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "bucket" {
-  bucket = "project-bucket090"
+  bucket = "project-bucket09"
 }
 
 resource "aws_s3_bucket_versioning" "versioning_example" {
