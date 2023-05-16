@@ -8,10 +8,10 @@ resource "aws_s3_bucket_versioning" "versioning_example" {
     status = "Enabled"
   }
 }
-resource "aws_s3_bucket_object" "upload" {
-  bucket = aws_s3_bucket.bucket.id
-  key    = "Course-Certificate_Terraform-Basics-Training-Course_Saqib-Mustafa.pdf"
-  source = "C:\\Users\\hamza.nasirmahmood\\Downloads\\Course-Certificate_Terraform-Basics-Training-Course_Saqib-Mustafa.pdf"
+#resource "aws_s3_bucket_object" "upload" {
+  #bucket = aws_s3_bucket.bucket.id
+ # key    = "Course-Certificate_Terraform-Basics-Training-Course_Saqib-Mustafa.pdf"
+  #source = "C:\\Users\\hamza.nasirmahmood\\Downloads\\Course-Certificate_Terraform-Basics-Training-Course_Saqib-Mustafa.pdf"
 
   # The filemd5() function is available in Terraform 0.11.12 and later
   # For Terraform 0.11.11 and earlier, use the md5() function and the file() function:
