@@ -1,57 +1,29 @@
 provider "aws" {
-     region = "us-east-2"
-     access_key = "AKIA3ACNW5PKJQ3SQ66B"
-     secret_key = "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"
+    region = "us-east-2"
+access_key = "AKIA3ACNW5PKAGINZWVS"
+secret_key = "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"
 }
-# create vpc 
-resource "aws_vpc" "prod-vpc" {
-  cidr_block = "10.0.0.0/16"
+
+resource "aws_default_vpc" "default" {
   tags = {
-      name = "production"
+    Name = "Default VPC"
   }
 }
-# create internet gateway
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.prod-vpc.id
+
+data "aws_availability_zones" "available" {
+  
 }
-#create custom route table 
-resource "aws_route_table" "prod-route-table" {
-   vpc_id = aws_vpc.prod-vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
-
-  route {
-    ipv6_cidr_block        = "::/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
+resource "aws_default_subnet" "default" {
+  availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
-    Name = "prod"
-  } 
+    Name = "Default subnet for us-east-2a"
+  }
 }
-#create a subnet
-resource "aws_subnet" "subnet-1" {
-    vpc_id = aws_vpc.prod-vpc.id
-    cidr_block = "10.0.1.0/24"
-    availability_zone = "us-east-2a"
-    tags = {
-        name = "prod-subnet"
-    }
-}
-#associate subnet with route table
-resource "aws_route_table_association" "a" {
-  subnet_id      = aws_subnet.subnet-1.id
-  route_table_id = aws_route_table.prod-route-table.id
-}
-
-#create security group to allow port 22,443,80
 resource "aws_security_group" "allow_web" {
   name        = "allow_web-traffic"
   description = "Allow TLS inbound traffic"
-  vpc_id      = aws_vpc.prod-vpc.id
+  vpc_id      = aws_default_vpc.default.id
 
   ingress {
     description      = "HTTPS"
@@ -63,8 +35,8 @@ resource "aws_security_group" "allow_web" {
   }
   ingress {
     description      = "HTTP"
-    from_port        = 80
-    to_port          = 80
+    from_port        = 8080
+    to_port          = 8080
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
@@ -89,40 +61,43 @@ resource "aws_security_group" "allow_web" {
     Name = "allow_web"
   }
 }
-#create a network interface with an ip in the subnet that was created in step 4
-resource "aws_network_interface" "test" {
-  subnet_id       = aws_subnet.subnet-1.id
-  private_ips     = ["10.0.1.50"]
-  security_groups = [aws_security_group.allow_web.id]
-}
-#assign an elastic ip to the network interface created in step 7
-resource "aws_eip" "one" {
-  vpc                       = true
-  network_interface         = aws_network_interface.test.id
-  associate_with_private_ip = "10.0.1.50"
-  depends_on                = [aws_internet_gateway.gw]
-}
 
-#create ubuntu server and install/enable apache2
-resource "aws_instance" "web_server_insatnce" {
-    ami = "ami-0a695f0d95cefc163"
+resource "aws_instance" "Jenkins" {
+    ami = "ami-06c4532923d4ba1ec"
     instance_type = "t2.micro"
+    subnet_id = aws_default_subnet.default.id
     availability_zone = "us-east-2a"
+    vpc_security_group_ids = [aws_security_group.allow_web.id]
     key_name = "terra-key"
 tags = {
-     Name= "dev_vm"
+     Name= "Jenkins-vm"
 }  
-    network_interface {
-        device_index = 0 
-        network_interface_id = aws_network_interface.test.id 
+
+}
+resource "null_resource" "name" {
+    #ssh into ec2 instance
+    connection {
+    type = "ssh"
+    user = "ubuntu"
+    private_key = file("C:\\Users\\hamza.nasirmahmood\\Downloads\\terra-key.pem")
+    host = aws_instance.Jenkins.public_ip  
     }
-    
-    user_data = <<-EOF
-                #!/bin/bash
-                sudo apt update        
-                sudo apt insatll nginx -y
-                sudo systemvtl enable nginx
-                sudo systemctl start nginx
-                sudo apt install net-tools
-                EOF
+
+provisioner "file" {
+    source = "install_jenkins.sh"
+    destination = "/tmp/install_jenkins.sh"
+
+}
+
+provisioner "remote-exec" {
+    inline = [
+        "sudo sh chmod +x /tmp/install_jenkins.sh",
+        "sh /tmp/install_jenkins.sh"
+    ]
+}
+
+depends_on = [
+    aws_instance.Jenkins
+]
+
 }
